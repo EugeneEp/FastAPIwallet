@@ -21,7 +21,7 @@ router = APIRouter()
 
 # Получить данные профиля
 @router.get('/profile')
-def profile(current_user: Users = Depends(get_current_user)):
+async def profile(current_user: Users = Depends(get_current_user)):
 	identity = {'fullname': '', 'passport': '', 'passportIssuedAt': ''}
 	if current_user.identity:
 		identity.update(current_user.identity)
@@ -29,7 +29,7 @@ def profile(current_user: Users = Depends(get_current_user)):
 
 # Изменить данные профиля
 @router.put('/profile', response_model=schemas.userIdentityOut)
-def profile(ident: schemas.userIdentity,
+async def profile(ident: schemas.userIdentity,
 			current_user: Users = Depends(get_current_user),
 			db: Session = Depends(get_db)):
 	print(current_user.identity)
@@ -40,7 +40,7 @@ def profile(ident: schemas.userIdentity,
 
 # Загрузить аватарку
 @router.post('/profile_picture')
-def profile_picture(image: UploadFile = File(...),
+async def profile_picture(image: UploadFile = File(...),
 					current_user: Users = Depends(get_current_user)):
 	for x in glob.glob('static/upload/profile/' + str(current_user.id) + '.png'):
 		os.unlink(x)
@@ -53,7 +53,7 @@ def profile_picture(image: UploadFile = File(...),
 
 # Транзакции пользователя
 @router.post('/transactions')
-def get_transactions(date_from: Optional[datetime] = None,
+async def get_transactions(date_from: Optional[datetime] = None,
 				date_end: Optional[datetime] = None, 
 				page: Optional[int] = Query(1, gt=0, description='Страница'),
 				current_user: Users = Depends(get_current_user)):
@@ -73,7 +73,7 @@ def get_transactions(date_from: Optional[datetime] = None,
 
 # Получить список транзакций в CSV формате
 @router.post('/csv')
-def get_csv(date_from: Optional[datetime] = None,
+async def get_csv(date_from: Optional[datetime] = None,
 			date_end: Optional[datetime] = None,
 			current_user: Users = Depends(get_current_user)):
 	try:
@@ -106,20 +106,20 @@ def get_csv(date_from: Optional[datetime] = None,
 
 # Пополнить кошелек
 @router.post('/charge')
-def charge(current_user: Users = Depends(get_current_user)):
+async def charge(current_user: Users = Depends(get_current_user)):
 	return JSONResponse(status_code=403, content={'message':'Метод еще не готов'})
 
 # Перевод на кошелек
 @router.post('/transfer')
-def transfer(current_user: Users = Depends(get_current_user)):
+async def transfer(current_user: Users = Depends(get_current_user)):
 	return JSONResponse(status_code=403, content={'message':'Метод еще не готов'})
 
 # Создать ссылку для сбора средств на кошелек
 @router.post('/moneybank')
-def moneybank(current_user: Users = Depends(get_current_user)):
+async def moneybank(current_user: Users = Depends(get_current_user)):
 	return JSONResponse(status_code=403, content={'message':'Метод еще не готов'})
 
 # Создать ссылку на пожертвования
 @router.post('/donate')
-def donate(current_user: Users = Depends(get_current_user)):
+async def donate(current_user: Users = Depends(get_current_user)):
 	return JSONResponse(status_code=403, content={'message':'Метод еще не готов'})
