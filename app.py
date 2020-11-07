@@ -8,7 +8,10 @@ from sqlalchemy.orm import sessionmaker
 from fastapi.security import OAuth2PasswordBearer
 from starlette.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from redis import Redis
+import pickle
 import jwt
+
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -22,6 +25,8 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
+r = Redis(host='localhost', port=6379, password='foobared')
+
 def get_db():
     db = SessionLocal()
     try:
@@ -34,9 +39,16 @@ from models import Users
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
 	try:
 		data = jwt.decode(token, settings.SECRET_KEY)
-		user = db.query(Users).filter(Users.phone==int(data['sub'])).first()
+		user = pickle.loads(r.get(data['sub'])) if r.get(data['sub']) else None
 		if not user:
-			return JSONResponse(status_code=401, content={'message':'Пользователь не найден'})
+			print('no redis')
+			user = db.query(Users).filter(Users.phone==int(data['sub'])).first()
+			if not user:
+				return JSONResponse(status_code=401, content={'message':'Пользователь не найден'})
+			user_obj = pickle.dumps(user)
+			r.set(data['sub'], user_obj, ex=3600)
+		else:
+			print('redis')
 		return user
 	except jwt.ExpiredSignatureError:
 		return JSONResponse(status_code=401, content={'message':'Истек срок действия токена'})

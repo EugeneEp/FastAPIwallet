@@ -56,15 +56,18 @@ async def profile_picture(image: UploadFile = File(...),
 async def get_transactions(date_from: Optional[datetime] = None,
 				date_end: Optional[datetime] = None, 
 				page: Optional[int] = Query(1, gt=0, description='Страница'),
-				current_user: Users = Depends(get_current_user)):
+				current_user: Users = Depends(get_current_user),
+				db: Session = Depends(get_db)):
 	filters = []
+
+	filters.append(Transactions.user_id == current_user.id)
 
 	if date_from and date_from != "":
 		filters.append(Transactions.time > dateToTime(date_from))
 	if date_end and date_end != "":
 		filters.append(Transactions.time < dateToTime(date_end))
 
-	transactions = paginate(current_user.transactions.filter(and_(*filters)).order_by(Transactions.id.desc()), page, 8)
+	transactions = paginate(db.query(Transactions).filter(and_(*filters)).order_by(Transactions.id.desc()), page, 8)
 
 	t = transParse(transactions.items)
 	p = paginatorParse(transactions, page)
@@ -75,18 +78,21 @@ async def get_transactions(date_from: Optional[datetime] = None,
 @router.post('/csv')
 async def get_csv(date_from: Optional[datetime] = None,
 			date_end: Optional[datetime] = None,
-			current_user: Users = Depends(get_current_user)):
+			current_user: Users = Depends(get_current_user),
+			db: Session = Depends(get_db)):
 	try:
 		mylist = [['Дата', 'Тип транзакции', 'Статус', 'Сумма']]
 
 		filters = []
+
+		filters.append(Transactions.user_id == current_user.id)
 
 		if date_from and date_from != "":
 			filters.append(Transactions.time > dateToTime(date_from))
 		if date_end and date_end != "":
 			filters.append(Transactions.time < dateToTime(date_end))
 			
-		transactions = current_user.transactions.filter(and_(*filters)).order_by(Transactions.id.desc()).all()
+		transactions = db.query(Transactions).filter(and_(*filters)).order_by(Transactions.id.desc()).all()
 		for t in transactions:
 			t.time = timeToDate(t.time)
 			t.movement_type = movementTranslate(t.movement_type)
@@ -106,7 +112,7 @@ async def get_csv(date_from: Optional[datetime] = None,
 
 # Пополнить кошелек
 @router.post('/charge')
-async def charge(current_user: Users = Depends(get_current_user)):
+async def charge(current_user: {} = Depends(get_current_user)):
 	return JSONResponse(status_code=403, content={'message':'Метод еще не готов'})
 
 # Перевод на кошелек

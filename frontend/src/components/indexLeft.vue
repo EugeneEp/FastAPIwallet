@@ -5,7 +5,7 @@
 			        	<router-link to='/wallet' v-if='!preload' class="profile_pic">
 			        		<div v-if='user.photo' class="profile-outer" :style='{"background-image":"url("+user.photoUrl+"?t=" + Date.now()+")"}'></div>
 			        		<i v-else class="fa fa-user"></i>
-			        	</router-link>
+			        	</router-link><br>
 			        	<router-link to='/userLogout'>
 			        		Выйти
 			        	</router-link>
@@ -45,7 +45,7 @@
 		methods:{
 			checkPhoto(){
 				if(this.user.authenticated){
-					const path = 'http://127.0.0.1:1337/static/upload/profile/' + this.user.id + '.png';
+					const path = 'http://127.0.0.1:8000/static/upload/profile/' + this.user.id + '.png';
 					axios.get(path)
 						.then((res) => {
 							this.user.photo = true;
